@@ -25,7 +25,6 @@ request_cached_object(Node, ObjectKey) ->
     gen_server:cast({?MODULE, Node}, {remote_object_request, {node(), ObjectKey}}).
 
 send_cached_object(Node, Object) ->
-    erlang:display({sent_object, Node, Object}),
     gen_server:cast({?MODULE, Node}, {remote_object_response, Object}).
 
 start_link() ->
