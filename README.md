@@ -11,10 +11,10 @@ It supports:
   - invalidation requests
   - warmup: already present nodes send their most recently used cached HTTP responses to joining nodes
 - telemetry events (see [Telemetry](#telemetry))
-- Backpressure mechanisms to avoid overloading the whole system with caching operations
+- backpressure mechanisms to avoid overloading the whole system with caching operations
 - the optional `http_cache_store:invalidate_by_alternate_key/1` callback
 
-Under the hood, it simply saves the HTTP response body on disk (other HTTP caches use other methods)
+Under the hood, it simply saves the HTTP response body on disk as a file (other HTTP caches use other methods)
 and related libraries (such as `plug_http_cache`) use the `sendfile` system call when available.
 This enables sending files extremely fast because:
 - this avoids going back and forth from userland and kernel. All sending operation is done in the
