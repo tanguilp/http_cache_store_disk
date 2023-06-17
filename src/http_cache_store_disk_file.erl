@@ -2,7 +2,7 @@
 
 -include("http_cache_store_disk.hrl").
 
--export([filepath/1, configure_cache_dir/0, partition/1, cache_dir/0]).
+-export([filepath/1, configure_cache_dir/0, cache_dir/0]).
 
 -define(SEP, <<"/">>).
 
@@ -13,35 +13,6 @@ filepath(ObjectKey) ->
 configure_cache_dir() ->
     [make_path(DirIdx, SubDirIdx)
      || DirIdx <- lists:seq(1, ?NB_DIRS), SubDirIdx <- lists:seq(1, ?NB_SUBDIRS)].
-
--spec partition(binary()) -> binary().
-partition(Path) ->
-    PathSplit = binary:split(Path, ?SEP, [trim_all, global]),
-    AllParts = [list_to_binary(Partition) || {Partition, _, _} <- disksup:get_disk_data()],
-    AllPartsSplit = [binary:split(Part, ?SEP, [trim_all, global]) || Part <- AllParts],
-    BiggestPrefix =
-        lists:foldl(fun(PartSplit, Acc) ->
-                       IsBiggerPrefix =
-                           is_path_prefix(PartSplit, PathSplit)
-                           andalso length(PartSplit) > length(Acc),
-                       case IsBiggerPrefix of
-                           true ->
-                               PartSplit;
-                           false ->
-                               Acc
-                       end
-                    end,
-                    [],
-                    AllPartsSplit),
-    {Part, _} = lists:keyfind(BiggestPrefix, 2, lists:zip(AllParts, AllPartsSplit)),
-    Part.
-
-is_path_prefix([Dir | RestPart], [Dir | RestPath]) ->
-    is_path_prefix(RestPart, RestPath);
-is_path_prefix([], _) ->
-    true;
-is_path_prefix(_, _) ->
-    false.
 
 path(ObjectKey) ->
     ObjectKeyBin = term_to_binary(ObjectKey),

@@ -11,34 +11,34 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
 
 -define(DEFAULT_DISK_LIMIT, 0.92).
+-define(DEFAULT_DISK_LIMIT_CHECK_INTERVAL, 60000).
 
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init(_) ->
     CacheDir = http_cache_store_disk_file:cache_dir(),
-    Partition = http_cache_store_disk_file:partition(CacheDir),
     schedule_check(),
-    {ok, Partition}.
+    {ok, CacheDir}.
 
-handle_call(_Request, _From, Partition) ->
-    {reply, ok, Partition}.
+handle_call(_Request, _From, CacheDir) ->
+    {reply, ok, CacheDir}.
 
-handle_cast(_Request, Partition) ->
-    {noreply, Partition}.
+handle_cast(_Request, CacheDir) ->
+    {noreply, CacheDir}.
 
-handle_info(check, Partition) ->
+handle_info(check, CacheDir) ->
     telemetry:span([http_cache_store_disk, lru_nuker, disk],
                    #{},
                    fun() ->
-                      check_disk_usage(Partition),
+                      check_disk_usage(CacheDir),
                       {ok, #{}}
                    end),
     schedule_check(),
-    {noreply, Partition}.
+    {noreply, CacheDir}.
 
-check_disk_usage(Partition) ->
-    {DiskSize, DiskUsage} = get_disk_usage(Partition),
+check_disk_usage(CacheDir) ->
+    {DiskSize, DiskUsage} = get_disk_usage(CacheDir),
     DiskLimit = disk_limit(),
     case DiskUsage > DiskLimit of
         true ->
@@ -73,19 +73,22 @@ nuke_objects(BytesToDelete) ->
             end
     end.
 
-get_disk_usage(Partition) ->
-    case disksup:get_disk_data() of
-        [{"none", 0, 0}] ->
+get_disk_usage(CacheDir) ->
+    case disksup:get_disk_info(CacheDir) of
+        [{_, 0, 0, 0}] ->
             logger:error("Invalid disk usage data, disksup does not seem to work. Fix it or cache directory will fill without any limitation"),
             {0, 0};
-        DiskData ->
-            {_, KBytes, Usage} = lists:keyfind(binary_to_list(Partition), 1, DiskData),
-            {KBytes * 1024, Usage / 100}
+        [{_, TotalKib, _, Capacity}] ->
+            {TotalKib * 1024, Capacity / 100}
     end.
 
 schedule_check() ->
-    CheckInterval = disksup:get_check_interval(),
-    erlang:send_after(CheckInterval, self(), check).
+    erlang:send_after(check_interval(), self(), check).
 
 disk_limit() ->
     application:get_env(http_cache_store_disk, disk_limit, ?DEFAULT_DISK_LIMIT).
+
+check_interval() ->
+    application:get_env(http_cache_store_disk,
+                        disk_limit_check_interval,
+                        ?DEFAULT_DISK_LIMIT_CHECK_INTERVAL).

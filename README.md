@@ -31,43 +31,11 @@ number of bytes (see the `--apparent-size` option of the `du` program for instan
 
 ## Support
 
-OTP25+
+OTP26+
 
 ## Usage
 
 This is an OTP application, and automatically starts.
-
-### Configuring `disksup`
-
-This application relies on `disksup` to check disk usage, and start nuking older entries when
-needed.
-
-By default, it checks disk usage every 30 minutes, which is to high when caching a lot of data.
-You can to configure `disksup` to check more often, using the `disk_space_check_interval` option of
-the `os_mon` application:
-
-Erlang:
-```erlang
-{os_mon, [{disk_space_check_interval, 1}]}
-```
-
-Elixir:
-```elixir
-config :os_mon, :disk_space_check_interval, 1
-```
-
-sets checking interval to 1 minute.
-
-Since OTP25.2, one can configure interval less than a minute:
-
-```erlang
-{os_mon, [{disk_space_check_interval, {second, 10}}]}
-```
-
-Elixir:
-```elixir
-config :os_mon, :disk_space_check_interval, {:second, 10}
-```
 
 ### Setting the right thresholds
 
@@ -116,9 +84,11 @@ emitted, in milliseconds. Defaults to `1000`
 Default to `5000`
 - `warmup_timeout`: how long the warmup process is active, that is it tries to get objects from
 joining nodes, in milliseconds. Default to `20000`
+- `disk_limit_check_interval`: how often to check for disk limit, and trigger LRU nuking when
+exceeded, in milliseconds. Defaults to `60000`. Take under consideration that the Unix `df` program
+is called, so you should not call it too often (< 1 second).
 - `mem_limit_check_interval`: how often to check for memory limit, and trigger LRU nuking when
-exceeded, in milliseconds. Defaults to `1000`. Disk limit is checked as often as configured on
-`disksup` (see section above)
+exceeded, in milliseconds. Defaults to `1000`.
 - `expired_resp_sweep_interval`: how often expired responses are purged, in milliseconds.
 Defaults to `3000`
 - `outdated_lru_sweep_interval`: how often outdated LRU entries are purged, in milliseconds.
@@ -130,6 +100,7 @@ The following options can be modified at runtime:
 - `delay_before_delete`
 - `max_worker_queue_len`
 - `pull_table_stats_interval`
+- `disk_limit_check_interval`
 - `mem_limit_check_interval`
 - `expired_resp_sweep_interval`
 - `outdated_lru_sweep_interval`
