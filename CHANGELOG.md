@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
+## [0.2.2] - 2023-06-19
+
+### Fixed
+
+- [`http_cache_store_disk.erl`] Fix a bug that caused the http cache directory
+not being swept on startup. As a consequence, old objects not purged before the
+application stopped where stored forever
+
 ## [0.2.1] - 2023-06-19
 
 ### Changed
