@@ -59,7 +59,8 @@ reconsider this default.
 ### Configuration parameters
 
 - `cache_dir` [**Mandatory**]: the directory where to store cache data. If it does not exists, it is
-created. No default
+created. No default. **Beware**: this directory is irreversibly swept on startup. Don't set `/` or
+even `/tmp`!
 - `disk_limit`: maximum disk usage as a float. Above this limit, oldest objects start being nuked.
 Defaults to `0.92`. Note that some file systems start performing poorly when approaching the 100%
 mark

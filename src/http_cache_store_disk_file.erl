@@ -2,13 +2,16 @@
 
 -include("http_cache_store_disk.hrl").
 
--export([filepath/1, configure_cache_dir/0, cache_dir/0]).
+-export([filepath/1, configure_cache_dir/0, cache_dir/0, sweep_persisted_files/0]).
 
 -define(SEP, <<"/">>).
 
 filepath(ObjectKey) ->
     PathWithoutExt = path(ObjectKey),
     <<PathWithoutExt/binary, ?OBJECT_EXT/binary>>.
+
+sweep_persisted_files() ->
+    file:del_dir_r(cache_dir()).
 
 configure_cache_dir() ->
     [make_path(DirIdx, SubDirIdx)

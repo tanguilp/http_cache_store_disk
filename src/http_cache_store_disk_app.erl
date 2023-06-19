@@ -31,4 +31,5 @@ stop(_State) ->
 %%====================================================================
 
 handle_cache_dir() ->
+    http_cache_store_disk_file:sweep_persisted_files(),
     http_cache_store_disk_file:configure_cache_dir().
