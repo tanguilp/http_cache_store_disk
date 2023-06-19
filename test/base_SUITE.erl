@@ -7,6 +7,7 @@
          invalidate_by_url/1, invalidate_by_alternate_key/1]).
 
 -define(MEM_LIMIT_CHECK_INTERVAL, 100).
+-define(DISK_LIMIT_CHECK_INTERVAL, 1000).
 -define(TEST_REQUEST_KEY, <<"some request key">>).
 -define(TEST_URL_DIGEST, <<"request URI digest">>).
 -define(TEST_VARY_HEADERS, #{}).
@@ -31,7 +32,9 @@ init_per_testcase(TestName, Config) ->
     application:set_env(http_cache_store_disk,
                         mem_limit_check_interval,
                         ?MEM_LIMIT_CHECK_INTERVAL),
-    application:set_env(os_mon, disk_space_check_interval, {second, 1}),
+    application:set_env(http_cache_store_disk,
+                        disk_limit_check_interval,
+                        ?DISK_LIMIT_CHECK_INTERVAL),
     application:set_env(http_cache_store_disk, disk_limit, 1.0),
     application:set_env(http_cache_store_disk, memory_limit, 1.0),
     {ok, _} = application:ensure_all_started(http_cache_store_disk),
@@ -65,7 +68,7 @@ lru_deletion_disk_limit(_Config) ->
                               ?TEST_RESP_METADATA,
                               ?TEST_OPTS),
     application:set_env(http_cache_store_disk, disk_limit, 0.0),
-    timer:sleep(disksup:get_check_interval() * 2),
+    timer:sleep(?DISK_LIMIT_CHECK_INTERVAL * 2),
     [] = http_cache_store_disk:list_candidates(?TEST_REQUEST_KEY, ?TEST_OPTS),
     receive
         {[http_cache_store_disk, object_deleted],
