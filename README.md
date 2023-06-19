@@ -29,6 +29,8 @@ It does not support configuration of a fixed amount of bytes for disk usage, mai
 number of bytes (see the `--apparent-size` option of the `du` program for instance)
 - the author couldn't actualy have it working, probably for the reason mentioned above
 
+For in-memory caching, see: [`http_cache_store_memory`](https://github.com/tanguilp/http_cache_store_memory).
+
 ## Support
 
 OTP26+
