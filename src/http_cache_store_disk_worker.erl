@@ -93,13 +93,22 @@ write_to_disk(ObjectKey,
     end.
 
 discard_object(ObjectKey, DeleteListTable) ->
-    case ets:lookup_element(?OBJECT_TABLE, ObjectKey, 4) of
-        {_Status, _RespHeaders, file} ->
-            ets:insert(DeleteListTable, {ObjectKey, unix_now(millisecond)});
+    % In rare case cleanup processes can send twice the same object to delete.
+    % ets:lookup_element/3 throws an error if the object does not exist, hence the defensive code.
+    try case ets:lookup_element(?OBJECT_TABLE, ObjectKey, 4) of
+            {_Status, _RespHeaders, file} ->
+                ets:insert(DeleteListTable, {ObjectKey, unix_now(millisecond)});
+            _ ->
+                ok
+        end,
+        ets:delete(?OBJECT_TABLE, ObjectKey)
+    of
         _ ->
             ok
-    end,
-    ets:delete(?OBJECT_TABLE, ObjectKey).
+    catch
+        error:badarg ->
+            ok
+    end.
 
 invalidate_url(UrlDigest) ->
     invalidate_url(UrlDigest, ets:first(?OBJECT_TABLE)).
