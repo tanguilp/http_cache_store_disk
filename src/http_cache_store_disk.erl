@@ -3,7 +3,7 @@
 
 -include("http_cache_store_disk.hrl").
 
--behaviour(http_cache_store).
+-behaviour(http_cache_store_behaviour).
 
 -export([list_candidates/2, get_response/2, put/6, notify_response_used/2,
          invalidate_url/2, invalidate_by_alternate_key/2, delete_object/2, object_key/2, lru/2]).
