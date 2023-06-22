@@ -113,13 +113,13 @@ The following options can be modified at runtime:
 Erlang (rebar3):
 
 ```erlang
-{deps, [{http_cache_store_disk, "~> 0.2.2"}]}.
+{deps, [{http_cache_store_disk, "~> 0.3.0"}]}.
 ```
 
 Elixir:
 
 ```elixir
-{:http_cache_store_disk, "~> 0.2.2"}
+{:http_cache_store_disk, "~> 0.3.0"}
 ```
 
 ## Telemetry

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
+## [0.3.0] - 2023-06-22
+
+### Changed
+
+- [`http_cache_store_disk`] Removed dependency to `http_cache`
+
 ## [0.2.2] - 2023-06-19
 
 ### Fixed
