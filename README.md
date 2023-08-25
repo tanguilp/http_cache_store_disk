@@ -39,6 +39,16 @@ OTP26+
 
 This is an OTP application, and automatically starts.
 
+## `http_cache*` pro versions
+
+Advanced HTTP caching features are available as licensed packages:
+- [`http_cache_pro`](https://hex.codecodeship.com/package/http_cache_pro): brings HTTP request
+collapsing, brotli compression support and more
+- [`http_cache_store_disk_pro`](https://hex.codecodeship.com/package/http_cache_store_disk_pro):
+offers SSD protection and persistence support to your disk backend
+
+Refer to these links for technical insights and license information.
+
 ### Setting the right thresholds
 
 Metadata about HTTP responses written on disk are stored in-memory. The overhead is about 1kb per
