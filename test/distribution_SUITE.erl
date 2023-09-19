@@ -41,12 +41,12 @@ broadcast(Config) ->
                ?TEST_RESP_METADATA,
                ?TEST_OPTS]),
     timer:sleep(100),
-    [_] =
+    [Candidate] =
         peer:call(PeerA#peer.peer,
                   http_cache_store_disk,
                   list_candidates,
                   [?TEST_REQUEST_KEY, ?TEST_OPTS]),
-    [_] =
+    [Candidate] =
         peer:call(PeerB#peer.peer,
                   http_cache_store_disk,
                   list_candidates,
@@ -64,14 +64,14 @@ warmup(Config) ->
                ?TEST_RESP_METADATA,
                ?TEST_OPTS]),
     timer:sleep(100),
-    [_] =
+    [Candidate] =
         peer:call(PeerA#peer.peer,
                   http_cache_store_disk,
                   list_candidates,
                   [?TEST_REQUEST_KEY, ?TEST_OPTS]),
     connect_peers(PeerA, PeerB),
     timer:sleep(100),
-    [_] =
+    [Candidate] =
         peer:call(PeerB#peer.peer,
                   http_cache_store_disk,
                   list_candidates,
