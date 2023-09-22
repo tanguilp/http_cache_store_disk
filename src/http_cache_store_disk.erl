@@ -6,16 +6,16 @@
 -behaviour(http_cache_store_behaviour).
 
 -export([list_candidates/2, get_response/2, put/6, notify_response_used/2,
-         invalidate_url/2, invalidate_by_alternate_key/2, delete_object/2, object_key/2, lru/2]).
+         invalidate_url/2, invalidate_by_alternate_key/2, delete_object/2, object_key/3, lru/2]).
 
 list_candidates(RequestKey, _Opts) ->
     Spec =
-        [{{{RequestKey, '$1'}, '$2', '_', {'$3', '$4', '_'}, '$5', '_'},
+        [{{{RequestKey, '$1', '$2'}, '$3', '_', {'$4', '$5', '_'}, '$6', '_'},
           [],
-          [['$1', '$2', '$3', '$4', '$5']]}],
+          [['$1', '$2', '$3', '$4', '$5', '$6']]}],
     Now = os:system_time(second),
-    [{{RequestKey, VaryKeyPart}, Status, RespHeaders, VaryHeaders, RespMetadata}
-     || [VaryKeyPart, VaryHeaders, Status, RespHeaders, RespMetadata]
+    [{{RequestKey, VaryKeyPart, ChunkKeyPart}, Status, RespHeaders, VaryHeaders, RespMetadata}
+     || [VaryKeyPart, ChunkKeyPart, VaryHeaders, Status, RespHeaders, RespMetadata]
             <- ets:select(?OBJECT_TABLE, Spec),
         Now < map_get(grace, RespMetadata)].
 
@@ -74,8 +74,30 @@ delete_object(ObjectKey, Reason) ->
     http_cache_store_disk_worker_sup:execute({delete_object, ObjectKey}),
     ok.
 
-object_key(RequestKey, VaryHeaders) ->
-    {RequestKey, crypto:hash(sha224, erlang:term_to_binary(VaryHeaders))}.
+object_key(RequestKey, VaryHeaders, RespMetadata) ->
+    {RequestKey,
+     crypto:hash(sha256, erlang:term_to_binary(VaryHeaders)),
+     chunk_id(RespMetadata)}.
+
+chunk_id(#{parsed_headers := #{<<"content-range">> := {Unit, Start, End, Len}}}) ->
+    UnitBin =
+        if is_atom(Unit) ->
+               atom_to_binary(Unit);
+           true ->
+               Unit
+        end,
+    StartBin = integer_to_binary(Start),
+    EndBin = integer_to_binary(End),
+    LenBin =
+        case Len of
+            '*' ->
+                <<"*">>;
+            _ ->
+                integer_to_binary(Len)
+        end,
+    <<UnitBin/binary, " ", StartBin/binary, "-", EndBin/binary, "/", LenBin/binary>>;
+chunk_id(_RespMetadata) ->
+    <<>>.
 
 lru(ObjectKey, Timestamp) ->
     case ets:update_element(?OBJECT_TABLE, ObjectKey, {6, Timestamp}) of

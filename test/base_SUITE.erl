@@ -4,7 +4,7 @@
 
 -export([all/0, init_per_testcase/2, end_per_testcase/2]).
 -export([cache_file/1, lru_deletion_disk_limit/1, lru_deletion_memory_limit/1,
-         invalidate_by_url/1, invalidate_by_alternate_key/1]).
+         invalidate_by_url/1, invalidate_by_alternate_key/1, cache_chunks/1]).
 
 -define(MEM_LIMIT_CHECK_INTERVAL, 100).
 -define(DISK_LIMIT_CHECK_INTERVAL, 1000).
@@ -24,7 +24,8 @@ all() ->
      lru_deletion_disk_limit,
      lru_deletion_memory_limit,
      invalidate_by_url,
-     invalidate_by_alternate_key].
+     invalidate_by_alternate_key,
+     cache_chunks].
 
 init_per_testcase(TestName, Config) ->
     CacheDir = ?config(priv_dir, Config) ++ "/http_cache_tests/" ++ atom_to_list(TestName),
@@ -147,3 +148,25 @@ invalidate_by_alternate_key(_Config) ->
     after 1000 ->
         ct:fail(timeout_receive_telemetry_event)
     end.
+
+cache_chunks(_Config) ->
+    ChunkMetadata1 =
+        #{grace => erlang:system_time(second) + 120,
+          parsed_headers => #{<<"content-range">> => {bytes, 0, 5, 11}}},
+    ChunkMetadata2 =
+        #{grace => erlang:system_time(second) + 120,
+          parsed_headers => #{<<"content-range">> => {bytes, 6, 10, 11}}},
+    http_cache_store_disk:put(?TEST_REQUEST_KEY,
+                              ?TEST_URL_DIGEST,
+                              ?TEST_VARY_HEADERS,
+                              {206, [], <<"Hello">>},
+                              ChunkMetadata1,
+                              ?TEST_OPTS),
+    http_cache_store_disk:put(?TEST_REQUEST_KEY,
+                              ?TEST_URL_DIGEST,
+                              ?TEST_VARY_HEADERS,
+                              {206, [], <<"World">>},
+                              ChunkMetadata2,
+                              ?TEST_OPTS),
+    timer:sleep(100),
+    [_, _] = http_cache_store_disk:list_candidates(?TEST_REQUEST_KEY, ?TEST_OPTS).

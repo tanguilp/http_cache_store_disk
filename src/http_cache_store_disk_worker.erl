@@ -57,7 +57,7 @@ handle_info(batch_delete_objects, #{delete_list_table := DeleteListTable} = Stat
 
 cache_object({RequestKey, UrlDigest, VaryHeaders, Response, RespMetadata},
              DeleteListTable) ->
-    ObjectKey = http_cache_store_disk:object_key(RequestKey, VaryHeaders),
+    ObjectKey = http_cache_store_disk:object_key(RequestKey, VaryHeaders, RespMetadata),
     write_to_disk(ObjectKey, VaryHeaders, UrlDigest, Response, RespMetadata, DeleteListTable).
 
 write_to_disk(ObjectKey,
@@ -152,7 +152,7 @@ warmup_node(_Node, _Key, 0) ->
     ok;
 warmup_node(Node, {Timestamp, ObjectKey} = LRUKey, NbObjects) ->
     case ets:lookup(?OBJECT_TABLE, ObjectKey) of
-        [{{RequestKey, _}, VaryHeaders, UrlDigest, Response, RespMetadata, Timestamp}] ->
+        [{{RequestKey, _, _}, VaryHeaders, UrlDigest, Response, RespMetadata, Timestamp}] ->
             case response_with_bin_body(ObjectKey, Response) of
                 {ok, ResponseWithBinBody} ->
                     CachedObject =
@@ -168,7 +168,7 @@ warmup_node(Node, {Timestamp, ObjectKey} = LRUKey, NbObjects) ->
 
 send_requested_object(Node, ObjectKey) ->
     case ets:lookup(?OBJECT_TABLE, ObjectKey) of
-        [{{RequestKey, _}, VaryHeaders, UrlDigest, Response, RespMetadata, _}] ->
+        [{{RequestKey, _, _}, VaryHeaders, UrlDigest, Response, RespMetadata, _}] ->
             case response_with_bin_body(ObjectKey, Response) of
                 {ok, ResponseWithBinBody} ->
                     CachedObject =
