@@ -36,6 +36,8 @@ system_memory_use() ->
     system_memory_use(maps:from_list(
                           memsup:get_system_memory_data())).
 
+system_memory_use(#{free_memory := Free, system_total_memory := Total}) ->
+    1 - Free / Total;
 system_memory_use(#{available_memory := Available, system_total_memory := Total}) ->
     1 - Available / Total;
 system_memory_use(MemData) ->
