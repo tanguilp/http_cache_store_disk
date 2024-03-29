@@ -38,12 +38,13 @@ system_memory_use() ->
 
 system_memory_use(#{available_memory := Available, system_total_memory := Total}) ->
     1 - Available / Total;
-system_memory_use(MemData) ->
-    Cached = map_get(cached_memory, MemData),
-    Buffered = map_get(buffered_memory, MemData),
-    Free = map_get(free_memory, MemData),
-    Total = map_get(system_total_memory, MemData),
-    1 - (Cached + Buffered + Free) / Total.
+system_memory_use(#{cached_memory := Cached,
+                    buffered_memory := Buffered,
+                    free_memory := Free,
+                    system_total_memory := Total}) ->
+    1 - (Cached + Buffered + Free) / Total;
+system_memory_use(#{free_memory := Free, system_total_memory := Total}) ->
+    1 - Free / Total.
 
 table_memory_used(Table) ->
     WordSize = persistent_term:get(os_word_size),
