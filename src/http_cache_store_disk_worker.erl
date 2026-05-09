@@ -111,37 +111,24 @@ discard_object(ObjectKey, DeleteListTable) ->
     end.
 
 invalidate_url(UrlDigest) ->
-    invalidate_url(UrlDigest, ets:first(?OBJECT_TABLE)).
-
-invalidate_url(_UrlDigest, '$end_of_table') ->
-    ok;
-invalidate_url(UrlDigest, ObjectKey) ->
-    case ets:lookup(?OBJECT_TABLE, ObjectKey) of
-        [{_, _, UrlDigest, _, _, _}] ->
-            http_cache_store_disk:delete_object(ObjectKey, url_invalidation),
-            invalidate_url(UrlDigest, ets:next(?OBJECT_TABLE, ObjectKey));
-        _ ->
-            invalidate_url(UrlDigest, ets:next(?OBJECT_TABLE, ObjectKey))
-    end.
+    MatchSpec = [{{'_', '_', '$1', '_', '_', '_'}, [{'==', UrlDigest, '$1'}], [true]}],
+    NbDeleted = ets:select_delete(?OBJECT_TABLE, MatchSpec),
+    [telemetry:execute([http_cache_store_disk, object_deleted],
+                       #{},
+                       #{reason => url_invalidation})
+     || _ <- lists:seq(0, NbDeleted - 1)].
 
 invalidate_by_alternate_key(AltKeys) ->
-    invalidate_by_alternate_key(AltKeys, ets:first(?OBJECT_TABLE)).
-
-invalidate_by_alternate_key(_AltKeys, '$end_of_table') ->
-    ok;
-invalidate_by_alternate_key(AltKeys, ObjectKey) ->
-    case ets:lookup(?OBJECT_TABLE, ObjectKey) of
-        [{_, _, _, _, #{alternate_keys := ObjectAltKeys}, _}] ->
-            case lists:any(fun(AltKey) -> lists:member(AltKey, ObjectAltKeys) end, AltKeys) of
-                true ->
-                    http_cache_store_disk:delete_object(ObjectKey, alternate_key_invalidation),
-                    invalidate_by_alternate_key(AltKeys, ets:next(?OBJECT_TABLE, ObjectKey));
-                false ->
-                    invalidate_by_alternate_key(AltKeys, ets:next(?OBJECT_TABLE, ObjectKey))
-            end;
-        _ ->
-            invalidate_by_alternate_key(AltKeys, ets:next(?OBJECT_TABLE, ObjectKey))
-    end.
+    MatchSpec =
+        [{{'_', '_', '_', '_', #{alternate_keys => '$1'}, '_'},
+          [{is_map_key, AltKey, '$1'}],
+          [true]}
+         || AltKey <- AltKeys],
+    NbDeleted = ets:select_delete(?OBJECT_TABLE, MatchSpec),
+    [telemetry:execute([http_cache_store_disk, object_deleted],
+                       #{},
+                       #{reason => alternate_key_invalidation})
+     || _ <- lists:seq(0, NbDeleted - 1)].
 
 warmup_node(Node, NbObjects) ->
     warmup_node(Node, ets:last(?LRU_TABLE), NbObjects).
