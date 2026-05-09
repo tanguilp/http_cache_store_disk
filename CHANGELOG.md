@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
+## [0.3.2] - 2026-05-09
+
+### Changed
+
+- [`http_cache_store_disk`] Improve performance of invalidation by 1) making the
+alternate keys a map instead of a list and 2) using `ets:select_delete/2` instead
+of manual traversal
+
 ## [0.3.1] - 2024-03-29
 
 ### Fixed
