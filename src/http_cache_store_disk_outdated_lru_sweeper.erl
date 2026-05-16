@@ -23,12 +23,14 @@ handle_cast(_Request, State) ->
     {noreply, State}.
 
 handle_info(sweep, State) ->
-    telemetry:span([http_cache_store_disk, expired_lru_entry_sweeper],
-                   #{},
-                   fun() ->
-                      sweep(),
-                      {ok, #{}}
-                   end),
+    telemetry:span(
+        [http_cache_store_disk, expired_lru_entry_sweeper],
+        #{},
+        fun() ->
+            sweep(),
+            {ok, #{}}
+        end
+    ),
     schedule_sweep(),
     {noreply, State}.
 
@@ -50,6 +52,8 @@ schedule_sweep() ->
     erlang:send_after(sweep_interval(), self(), sweep).
 
 sweep_interval() ->
-    application:get_env(http_cache_store_disk,
-                        outdated_lru_sweep_interval,
-                        ?DEFAULT_INTERVAL).
+    application:get_env(
+        http_cache_store_disk,
+        outdated_lru_sweep_interval,
+        ?DEFAULT_INTERVAL
+    ).

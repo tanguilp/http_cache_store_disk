@@ -14,11 +14,12 @@
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
-execute({Type, _} = Cmd)
-    when Type == cache_object;
-         Type == remote_object_available;
-         Type == remote_object_request;
-         Type == remote_object_response ->
+execute({Type, _} = Cmd) when
+    Type == cache_object;
+    Type == remote_object_available;
+    Type == remote_object_request;
+    Type == remote_object_response
+->
     case http_cache_store_disk_stats:is_limit_reached() of
         false ->
             do_execute(Cmd);
@@ -65,12 +66,16 @@ init(_) ->
     NbWorkers = nb_workers(),
     ets:insert(?CONFIG_TABLE, {nb_workers, NbWorkers}),
     ChildSpecs =
-        [#{id => Partition,
-           start => {?MODULE, start_worker, [Partition]},
-           restart => permanent,
-           shutdown => brutal_kill,
-           modules => [http_cache_store_disk_worker]}
-         || Partition <- lists:seq(0, NbWorkers - 1)],
+        [
+            #{
+                id => Partition,
+                start => {?MODULE, start_worker, [Partition]},
+                restart => permanent,
+                shutdown => brutal_kill,
+                modules => [http_cache_store_disk_worker]
+            }
+         || Partition <- lists:seq(0, NbWorkers - 1)
+        ],
     {ok, {#{strategy => one_for_one}, ChildSpecs}}.
 
 start_worker(Partition) ->
@@ -89,6 +94,8 @@ max_worker_queue_len() ->
     application:get_env(http_cache_store_disk, max_worker_queue_len, ?MAX_WORKER_QUEUE_LEN).
 
 nb_workers() ->
-    application:get_env(http_cache_store_disk,
-                        nb_workers,
-                        erlang:system_info(schedulers_online)).
+    application:get_env(
+        http_cache_store_disk,
+        nb_workers,
+        erlang:system_info(schedulers_online)
+    ).

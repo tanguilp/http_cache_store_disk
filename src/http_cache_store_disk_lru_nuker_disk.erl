@@ -28,12 +28,14 @@ handle_cast(_Request, CacheDir) ->
     {noreply, CacheDir}.
 
 handle_info(check, CacheDir) ->
-    telemetry:span([http_cache_store_disk, lru_nuker, disk],
-                   #{},
-                   fun() ->
-                      check_disk_usage(CacheDir),
-                      {ok, #{}}
-                   end),
+    telemetry:span(
+        [http_cache_store_disk, lru_nuker, disk],
+        #{},
+        fun() ->
+            check_disk_usage(CacheDir),
+            {ok, #{}}
+        end
+    ),
     schedule_check(),
     {noreply, CacheDir}.
 
@@ -76,7 +78,9 @@ nuke_objects(BytesToDelete) ->
 get_disk_usage(CacheDir) ->
     case disksup:get_disk_info(CacheDir) of
         [{_, 0, 0, 0}] ->
-            logger:error("Invalid disk usage data, disksup does not seem to work. Fix it or cache directory will fill without any limitation"),
+            logger:error(
+                "Invalid disk usage data, disksup does not seem to work. Fix it or cache directory will fill without any limitation"
+            ),
             {0, 0};
         [{_, TotalKib, _, Capacity}] ->
             {TotalKib * 1024, Capacity / 100}
@@ -89,6 +93,8 @@ disk_limit() ->
     application:get_env(http_cache_store_disk, disk_limit, ?DEFAULT_DISK_LIMIT).
 
 check_interval() ->
-    application:get_env(http_cache_store_disk,
-                        disk_limit_check_interval,
-                        ?DEFAULT_DISK_LIMIT_CHECK_INTERVAL).
+    application:get_env(
+        http_cache_store_disk,
+        disk_limit_check_interval,
+        ?DEFAULT_DISK_LIMIT_CHECK_INTERVAL
+    ).

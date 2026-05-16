@@ -14,8 +14,10 @@ sweep_persisted_files() ->
     file:del_dir_r(cache_dir()).
 
 configure_cache_dir() ->
-    [make_path(DirIdx, SubDirIdx)
-     || DirIdx <- lists:seq(1, ?NB_DIRS), SubDirIdx <- lists:seq(1, ?NB_SUBDIRS)].
+    [
+        make_path(DirIdx, SubDirIdx)
+     || DirIdx <- lists:seq(1, ?NB_DIRS), SubDirIdx <- lists:seq(1, ?NB_SUBDIRS)
+    ].
 
 path(ObjectKey) ->
     ObjectKeyBin = term_to_binary(ObjectKey),
@@ -26,23 +28,15 @@ path(ObjectKey) ->
     CacheDir = cache_dir(),
     DirIdxBin = list_to_binary(io_lib:format("~2..0B", [DirIdx])),
     SubDirIdxBin = list_to_binary(io_lib:format("~2..0B", [SubDirIdx])),
-    <<CacheDir/binary,
-      DirIdxBin/binary,
-      ?SEP/binary,
-      SubDirIdxBin/binary,
-      ?SEP/binary,
-      BaseFilename/binary>>.
+    <<CacheDir/binary, DirIdxBin/binary, ?SEP/binary, SubDirIdxBin/binary, ?SEP/binary,
+        BaseFilename/binary>>.
 
 make_path(DirIdx, SubDirIdx) ->
     CacheDir = cache_dir(),
     DirIdxBin = list_to_binary(io_lib:format("~2..0B", [DirIdx])),
     SubDirIdxBin = list_to_binary(io_lib:format("~2..0B", [SubDirIdx])),
     Path =
-        <<CacheDir/binary,
-          DirIdxBin/binary,
-          <<"/">>/binary,
-          SubDirIdxBin/binary,
-          <<"/">>/binary>>,
+        <<CacheDir/binary, DirIdxBin/binary, <<"/">>/binary, SubDirIdxBin/binary, <<"/">>/binary>>,
     filelib:ensure_path(Path).
 
 cache_dir() ->
@@ -58,7 +52,7 @@ cache_dir() ->
 
 base64_url_encode(Bin) ->
     B64Bin = base64:encode(Bin),
-    << <<(urlencode_char(D))>> || <<D>> <= B64Bin, D =/= $= >>.
+    <<<<(urlencode_char(D))>> || <<D>> <= B64Bin, D =/= $=>>.
 
 urlencode_char($/) ->
     $_;

@@ -12,8 +12,10 @@ start_link() ->
 
 init(_) ->
     ets:new(?CONFIG_TABLE, [named_table, public]),
-    ets:new(?OBJECT_TABLE,
-            [ordered_set, named_table, public, compressed, {read_concurrency, true}]),
+    ets:new(
+        ?OBJECT_TABLE,
+        [ordered_set, named_table, public, compressed, {read_concurrency, true}]
+    ),
     ets:new(?LRU_TABLE, [ordered_set, named_table, public]),
     ets:new(?WORKER_PID_TABLE, [named_table, public]),
     http_cache_store_disk_stats:set_limit_reached(false),

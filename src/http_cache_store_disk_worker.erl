@@ -26,8 +26,10 @@ handle_call(_, _, State) ->
 handle_cast({cache_object, Object}, #{delete_list_table := DeleteListTable} = State) ->
     cache_object(Object, DeleteListTable),
     {noreply, State};
-handle_cast({delete_object, ObjectKey},
-            #{delete_list_table := DeleteListTable} = State) ->
+handle_cast(
+    {delete_object, ObjectKey},
+    #{delete_list_table := DeleteListTable} = State
+) ->
     discard_object(ObjectKey, DeleteListTable),
     {noreply, State};
 handle_cast({invalidate_url, UrlDigest}, State) ->
@@ -45,8 +47,10 @@ handle_cast({remote_object_available, {Node, {ObjectKey, Expires}}}, State) ->
 handle_cast({remote_object_request, {Node, ObjectKey}}, State) ->
     send_requested_object(Node, ObjectKey),
     {noreply, State};
-handle_cast({remote_object_response, Object},
-            #{delete_list_table := DeleteListTable} = State = State) ->
+handle_cast(
+    {remote_object_response, Object},
+    #{delete_list_table := DeleteListTable} = State = State
+) ->
     cache_object(Object, DeleteListTable),
     {noreply, State}.
 
@@ -55,17 +59,21 @@ handle_info(batch_delete_objects, #{delete_list_table := DeleteListTable} = Stat
     schedule_batch_delete(),
     {noreply, State}.
 
-cache_object({RequestKey, UrlDigest, VaryHeaders, Response, RespMetadata},
-             DeleteListTable) ->
+cache_object(
+    {RequestKey, UrlDigest, VaryHeaders, Response, RespMetadata},
+    DeleteListTable
+) ->
     ObjectKey = http_cache_store_disk:object_key(RequestKey, VaryHeaders, RespMetadata),
     write_to_disk(ObjectKey, VaryHeaders, UrlDigest, Response, RespMetadata, DeleteListTable).
 
-write_to_disk(ObjectKey,
-              VaryHeaders,
-              UrlDigest,
-              Response,
-              RespMetadata,
-              DeleteListTable) ->
+write_to_disk(
+    ObjectKey,
+    VaryHeaders,
+    UrlDigest,
+    Response,
+    RespMetadata,
+    DeleteListTable
+) ->
     {Status, RespHeaders, RespBody} = Response,
     Now = unix_now(second),
     FilePath = http_cache_store_disk_file:filepath(ObjectKey),
@@ -77,13 +85,10 @@ write_to_disk(ObjectKey,
     file:delete(FilePath),
     case file:write_file(FilePath, RespBody, [raw]) of
         ok ->
-            ets:insert(?OBJECT_TABLE,
-                       {ObjectKey,
-                        VaryHeaders,
-                        UrlDigest,
-                        {Status, RespHeaders, file},
-                        RespMetadata,
-                        Now}),
+            ets:insert(
+                ?OBJECT_TABLE,
+                {ObjectKey, VaryHeaders, UrlDigest, {Status, RespHeaders, file}, RespMetadata, Now}
+            ),
             ets:insert(?LRU_TABLE, {{Now, ObjectKey}}),
             ets:delete(DeleteListTable, ObjectKey),
             Expires = map_get(grace, RespMetadata),
@@ -95,7 +100,8 @@ write_to_disk(ObjectKey,
 discard_object(ObjectKey, DeleteListTable) ->
     % In rare case cleanup processes can send twice the same object to delete.
     % ets:lookup_element/3 throws an error if the object does not exist, hence the defensive code.
-    try case ets:lookup_element(?OBJECT_TABLE, ObjectKey, 4) of
+    try
+        case ets:lookup_element(?OBJECT_TABLE, ObjectKey, 4) of
             {_Status, _RespHeaders, file} ->
                 ets:insert(DeleteListTable, {ObjectKey, unix_now(millisecond)});
             _ ->
@@ -113,22 +119,32 @@ discard_object(ObjectKey, DeleteListTable) ->
 invalidate_url(UrlDigest) ->
     MatchSpec = [{{'_', '_', '$1', '_', '_', '_'}, [{'==', UrlDigest, '$1'}], [true]}],
     NbDeleted = ets:select_delete(?OBJECT_TABLE, MatchSpec),
-    [telemetry:execute([http_cache_store_disk, object_deleted],
-                       #{},
-                       #{reason => url_invalidation})
-     || _ <- lists:seq(0, NbDeleted - 1)].
+    [
+        telemetry:execute(
+            [http_cache_store_disk, object_deleted],
+            #{},
+            #{reason => url_invalidation}
+        )
+     || _ <- lists:seq(0, NbDeleted - 1)
+    ].
 
 invalidate_by_alternate_key(AltKeys) ->
     MatchSpec =
-        [{{'_', '_', '_', '_', #{alternate_keys => '$1'}, '_'},
-          [{is_map_key, AltKey, '$1'}],
-          [true]}
-         || AltKey <- AltKeys],
+        [
+            {{'_', '_', '_', '_', #{alternate_keys => '$1'}, '_'}, [{is_map_key, AltKey, '$1'}], [
+                true
+            ]}
+         || AltKey <- AltKeys
+        ],
     NbDeleted = ets:select_delete(?OBJECT_TABLE, MatchSpec),
-    [telemetry:execute([http_cache_store_disk, object_deleted],
-                       #{},
-                       #{reason => alternate_key_invalidation})
-     || _ <- lists:seq(0, NbDeleted - 1)].
+    [
+        telemetry:execute(
+            [http_cache_store_disk, object_deleted],
+            #{},
+            #{reason => alternate_key_invalidation}
+        )
+     || _ <- lists:seq(0, NbDeleted - 1)
+    ].
 
 warmup_node(Node, NbObjects) ->
     warmup_node(Node, ets:last(?LRU_TABLE), NbObjects).
@@ -192,12 +208,14 @@ batch_delete_objects(DeleteListTable) ->
     MinTime = Now - delay_before_delete(),
     MatchSpec = [{{'$1', '$2'}, [{'<', '$2', MinTime}], ['$1']}],
     ToDelete = ets:select(DeleteListTable, MatchSpec),
-    lists:map(fun(ObjectKey) ->
-                 FilePath = http_cache_store_disk_file:filepath(ObjectKey),
-                 ets:delete(DeleteListTable, ObjectKey),
-                 file:delete(FilePath)
-              end,
-              ToDelete).
+    lists:map(
+        fun(ObjectKey) ->
+            FilePath = http_cache_store_disk_file:filepath(ObjectKey),
+            ets:delete(DeleteListTable, ObjectKey),
+            file:delete(FilePath)
+        end,
+        ToDelete
+    ).
 
 schedule_batch_delete() ->
     timer:send_after(1000, batch_delete_objects).

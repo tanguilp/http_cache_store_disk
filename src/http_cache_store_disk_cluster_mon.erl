@@ -6,8 +6,13 @@
 -define(WARMUP_NB_OBJECTS, 5000).
 -define(WARMUP_TIMEOUT, 20 * 1000).
 
--export([broadcast_invalidate_url/1, broadcast_invalidate_by_alternate_key/1,
-         broadcast_object_available/2, request_cached_object/2, send_cached_object/2]).
+-export([
+    broadcast_invalidate_url/1,
+    broadcast_invalidate_by_alternate_key/1,
+    broadcast_object_available/2,
+    request_cached_object/2,
+    send_cached_object/2
+]).
 -export([start_link/0, init/1, handle_call/3, handle_cast/2, handle_info/2]).
 
 broadcast_invalidate_url(UrlDigest) ->
@@ -17,9 +22,11 @@ broadcast_invalidate_by_alternate_key(AltKeys) ->
     gen_server:abcast(nodes(), ?MODULE, {invalidate_by_alternate_key, AltKeys}).
 
 broadcast_object_available(ObjectKey, Expires) ->
-    gen_server:abcast(nodes(),
-                      ?MODULE,
-                      {remote_object_available, {node(), {ObjectKey, Expires}}}).
+    gen_server:abcast(
+        nodes(),
+        ?MODULE,
+        {remote_object_available, {node(), {ObjectKey, Expires}}}
+    ).
 
 request_cached_object(Node, ObjectKey) ->
     gen_server:cast({?MODULE, Node}, {remote_object_request, {node(), ObjectKey}}).

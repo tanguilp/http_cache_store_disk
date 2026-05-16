@@ -33,15 +33,20 @@ allocated_memory_used(MaxSize) when is_integer(MaxSize) ->
     (table_memory_used(?OBJECT_TABLE) + table_memory_used(?LRU_TABLE)) / MaxSize.
 
 system_memory_use() ->
-    system_memory_use(maps:from_list(
-                          memsup:get_system_memory_data())).
+    system_memory_use(
+        maps:from_list(
+            memsup:get_system_memory_data()
+        )
+    ).
 
 system_memory_use(#{available_memory := Available, system_total_memory := Total}) ->
     1 - Available / Total;
-system_memory_use(#{cached_memory := Cached,
-                    buffered_memory := Buffered,
-                    free_memory := Free,
-                    system_total_memory := Total}) ->
+system_memory_use(#{
+    cached_memory := Cached,
+    buffered_memory := Buffered,
+    free_memory := Free,
+    system_total_memory := Total
+}) ->
     1 - (Cached + Buffered + Free) / Total;
 system_memory_use(#{free_memory := Free, system_total_memory := Total}) ->
     1 - Free / Total.
@@ -57,11 +62,12 @@ init(_) ->
     WordSize = memsup:get_os_wordsize() div 8,
     persistent_term:put(os_word_size, WordSize),
     schedule_collect(),
-    {ok,
-     #{total_mem => 0,
-       objects_mem => 0,
-       objects_count => 0,
-       lru_mem => 0}}.
+    {ok, #{
+        total_mem => 0,
+        objects_mem => 0,
+        objects_count => 0,
+        lru_mem => 0
+    }}.
 
 handle_call(stats, _From, Stats) ->
     {reply, Stats, Stats}.
@@ -74,10 +80,12 @@ handle_info(collect_stats, _Stats) ->
     ObjectsCount = ets:info(?OBJECT_TABLE, size),
     LRUMem = table_memory_used(?LRU_TABLE),
     Stats =
-        #{total_mem => ObjectsMem + LRUMem,
-          objects_mem => ObjectsMem,
-          objects_count => ObjectsCount,
-          lru_mem => LRUMem},
+        #{
+            total_mem => ObjectsMem + LRUMem,
+            objects_mem => ObjectsMem,
+            objects_count => ObjectsCount,
+            lru_mem => LRUMem
+        },
     telemetry:execute([http_cache_store_disk, memory], Stats, #{}),
     schedule_collect(),
     {noreply, Stats}.
