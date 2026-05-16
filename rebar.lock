@@ -1,13 +1,13 @@
 {"1.2.0",
 [{<<"http_cache_store_behaviour">>,
-  {pkg,<<"http_cache_store_behaviour">>,<<"0.3.0">>},
+  {pkg,<<"http_cache_store_behaviour">>,<<"1.0.0">>},
   0},
- {<<"telemetry">>,{pkg,<<"telemetry">>,<<"1.2.1">>},0}]}.
+ {<<"telemetry">>,{pkg,<<"telemetry">>,<<"1.4.2">>},0}]}.
 [
 {pkg_hash,[
- {<<"http_cache_store_behaviour">>, <<"D94116DA52EB05A065C63B0D10BAEB58B394C23478D7107AAADD270BEF577EE5">>},
- {<<"telemetry">>, <<"68FDFE8D8F05A8428483A97D7AAB2F268AAFF24B49E0F599FAA091F1D4E7F61C">>}]},
+ {<<"http_cache_store_behaviour">>, <<"351CB452C3BB86305F4BBE9C5C8D73D8D85785563F301BF5F6CE2703B73BD514">>},
+ {<<"telemetry">>, <<"A0CB522801DFFB1C49FE6E30561BADFFC7B6D0E180DB1300DF759FAA22062855">>}]},
 {pkg_hash_ext,[
- {<<"http_cache_store_behaviour">>, <<"45ECD47A0445364141C6E73CE6A64ACA478F4473F9AF0F509D8E4B4AE43640BD">>},
- {<<"telemetry">>, <<"DAD9CE9D8EFFC621708F99EAC538EF1CBE05D6A874DD741DE2E689C47FEAFED5">>}]}
+ {<<"http_cache_store_behaviour">>, <<"8C85B22D303ECCB0456D693D1D17A564E87077823B70F3032219C496A62DAFDC">>},
+ {<<"telemetry">>, <<"928F6495066506077862C0D1646609EED891A4326BEE3126BA54B60AF61FEBB1">>}]}
 ].
