@@ -9,6 +9,7 @@
     lru_deletion_memory_limit/1,
     invalidate_by_url/1,
     invalidate_by_alternate_key/1,
+    invalidate_by_alternate_key_tuple/1,
     cache_chunks/1
 ]).
 
@@ -33,6 +34,7 @@ all() ->
         lru_deletion_memory_limit,
         invalidate_by_url,
         invalidate_by_alternate_key,
+        invalidate_by_alternate_key_tuple,
         cache_chunks
     ].
 
@@ -151,6 +153,30 @@ invalidate_by_alternate_key(_Config) ->
     ),
     timer:sleep(1000),
     http_cache_store_disk:invalidate_by_alternate_key([alternate], ?TEST_OPTS),
+    timer:sleep(1000),
+    [] = http_cache_store_disk:list_candidates(?TEST_REQUEST_KEY, ?TEST_OPTS),
+    receive
+        {[http_cache_store_disk, object_deleted], TelemetryRef, #{}, #{
+            reason := alternate_key_invalidation
+        }} ->
+            telemetry:detach(TelemetryRef)
+    after 1000 ->
+        ct:fail(timeout_receive_telemetry_event)
+    end.
+
+invalidate_by_alternate_key_tuple(_Config) ->
+    TelemetryRef =
+        telemetry_test:attach_event_handlers(self(), [[http_cache_store_disk, object_deleted]]),
+    http_cache_store_disk:put(
+        ?TEST_REQUEST_KEY,
+        ?TEST_URL_DIGEST,
+        ?TEST_VARY_HEADERS,
+        ?TEST_RESPONSE,
+        maps:put(alternate_keys, [{some, tuple, key}], ?TEST_RESP_METADATA),
+        ?TEST_OPTS
+    ),
+    timer:sleep(1000),
+    http_cache_store_disk:invalidate_by_alternate_key([{some, tuple, key}], ?TEST_OPTS),
     timer:sleep(1000),
     [] = http_cache_store_disk:list_candidates(?TEST_REQUEST_KEY, ?TEST_OPTS),
     receive

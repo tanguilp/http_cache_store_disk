@@ -131,9 +131,13 @@ invalidate_url(UrlDigest) ->
 invalidate_by_alternate_key(AltKeys) ->
     MatchSpec =
         [
-            {{'_', '_', '_', '_', #{alternate_keys => '$1'}, '_'}, [{is_map_key, AltKey, '$1'}], [
-                true
-            ]}
+            {
+                {'_', '_', '_', '_', #{alternate_keys => '$1'}, '_'},
+                [{is_map_key, {const, AltKey}, '$1'}],
+                [
+                    true
+                ]
+            }
          || AltKey <- AltKeys
         ],
     NbDeleted = ets:select_delete(?OBJECT_TABLE, MatchSpec),
